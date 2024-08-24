@@ -1,35 +1,44 @@
 from enum import Enum, auto
+
 class ReadAs(Enum):
     LINE = auto()
     CHAR = auto()
     WORD = auto()
     SENTENCE = auto()
+
 class easyFile:
     def __init__(self, filename, mode = "r", encoding = "UTF-8"):
         self.file = open(file=filename, mode=mode, encoding=encoding)
+
     def __del__(self):
         self.file.close()
-    def setReadAs(self, readAs, numbers = 1):
+
+    def set_mode(self, readAs, numbers = 1):
         self.readAs = readAs
         self.numbers = numbers
-    def getValue(self):
+
+    def get_content(self):
         content = self.file.read()
         ret = []
         if self.readAs == ReadAs.CHAR:      # char
-            0.91305 # nothing
+            # nothing
+            pass
         elif self.readAs == ReadAs.LINE:    # line
             content = content.split('\n')
         elif self.readAs == ReadAs.WORD:
-            content = self.readAsWord(content)
+            content = self.to_words(content)
         elif self.readAs == ReadAs.SENTENCE:
-            content = self.readAsSentence(content)
-        for i in range(0, len(content), self.numbers):
+            content = self.to_sentences(content)
+        num_content = len(content)
+        for i in range(0, min(num_content, len(content) // self.numbers * self.numbers), self.numbers):  
             ret.append(content[i:i + self.numbers])
         return ret
-    def run(self, func):
-        for i in self.getValue():
+
+    def apply_func(self, func):
+        for i in self.get_content():
             func(i)
-    def readAsWord(self, content):
+
+    def to_words(self, content):
         SPACE_CHARS = " \n\r\t"
         SYMBOL_CHARS = ",.'\"?!-:，。“”‘’？！—："
         result = []
@@ -43,28 +52,21 @@ class easyFile:
                 result.append(content[i])
                 i += 1
                 continue
-            new = content[i:]
-            temp = ""
-            for ii in range(len(new)):
-                if new[ii] in SPACE_CHARS or new[ii] in SYMBOL_CHARS:
-                    if temp == "":
-                        i = i + ii - 1
-                        break
-                    else:
-                        i = i + ii - 1
-                        break
-                else:
-                    temp += new[ii]
-            if temp != "":
-                result.append(temp)
+            start = i
+            while i < len(content) and (content[i] not in SPACE_CHARS and content[i] not in SYMBOL_CHARS):  
+                i += 1
+            if start!= i:
+                result.append(content[start:i])
             i += 1
         return result
-    def readAsSentence(self, content):
-        content = self.readAsWord(content)
+
+    def to_sentences(self, content):
+        content = self.to_words(content)
         result = []
         current_list = []
+        end_sentence_chars = ['.', '!', '?']  
         for item in content:
-            if item == '.':
+            if item in end_sentence_chars:
                 result.append(current_list)
                 current_list = []
             else:
